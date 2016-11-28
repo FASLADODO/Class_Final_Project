@@ -2,8 +2,8 @@
 clear all
 addpath('four_model_project_code');
 % load final_project_kit/train_set/raw_tweets_train.mat
-load final_project_kit/train_set/words_train.mat
-load final_project_kit/train_set/train_raw_img.mat
+load ../final_project_kit/train_set/words_train.mat
+load ../final_project_kit/train_set/train_raw_img.mat
 % load final_project_kit/train_set/train_cnn_feat.mat
 % load final_project_kit/train_set/train_img_prob.mat
 % load final_project_kit/train_set/train_color.mat
