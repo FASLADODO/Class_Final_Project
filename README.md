@@ -1,2 +1,2 @@
-# CIS520_Final_Project
-Fall 2016 CIS 520 Final Project
+# Class_Final_Project
+CIS 520 Final Project
