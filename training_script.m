@@ -202,7 +202,48 @@ precision = precision / K;
 % save('precision_KNN_Gaussian_kernel_set_2.mat','precision');
 % save('precision_KNN_Gaussian_kernel_set_3.mat','precision');
 %% Kernel with SVM
+load X_hat_PC_763.mat
+addpath('four_model_project_code/libsvm');
+% use original data
+% X_hat = X;
+N = size(X_hat, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+precision = zeros(5, 1);
+k = 1;
+X_train = X_hat(Indices ~= k, :);
+X_test = X_hat(Indices == k, :);
+Y_train = Y(Indices ~= k);
+Y_test = Y(Indices == k);
 
+k = @(x,x2) kernel_poly(x, x2, 1);
+precision(1) = precision(1) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+k = @(x,x2) kernel_poly(x, x2, 2);
+precision(2) = precision(2) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+k = @(x,x2) kernel_poly(x, x2, 3);
+precision(3) = precision(3) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+k = @(x,x2) kernel_gaussian(x, x2, 20);
+precision(4) = precision(4) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+k = @(x,x2) kernel_intersection(x, x2);
+precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+% for k = 1:K
+%     X_train = X_hat(Indices ~= k, :);
+%     X_test = X_hat(Indices == k, :);
+%     Y_train = Y(Indices ~= k);
+%     Y_test = Y(Indices == k);
+%     
+%     k = @(x,x2) kernel_poly(x, x2, 1);
+%     precision(1) = precision(1) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+%     k = @(x,x2) kernel_poly(x, x2, 2);
+%     precision(2) = precision(2) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+%     k = @(x,x2) kernel_poly(x, x2, 3);
+%     precision(3) = precision(3) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+%     k = @(x,x2) kernel_gaussian(x, x2, 20);
+%     precision(4) = precision(4) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+%     k = @(x,x2) kernel_intersection(x, x2);
+%     precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+% end
+% precision = 1 - precision / K;
 %% Method Summary
 % HW 02 Decision Tree, Q3
 % HW 05 Supervised Neural Network, Q1
