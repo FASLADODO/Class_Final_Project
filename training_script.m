@@ -3,7 +3,7 @@ clear all
 addpath('four_model_project_code');
 % load final_project_kit/train_set/raw_tweets_train.mat
 load ../final_project_kit/train_set/words_train.mat
-load ../final_project_kit/train_set/train_raw_img.mat
+% load ../final_project_kit/train_set/train_raw_img.mat
 % load final_project_kit/train_set/train_cnn_feat.mat
 % load final_project_kit/train_set/train_img_prob.mat
 % load final_project_kit/train_set/train_color.mat
@@ -33,7 +33,11 @@ end
 X0 = bsxfun(@minus, X, mean(X,1));
 [U,S,princ_loading] = svds(X0, 763);
 X_hat = X0*princ_loading;
-save('X_hat_PC_763.mat','X_hat');
+% save('X_hat_PC_763.mat','X_hat');
+%% PCA with pca function
+X_hat = full(X);
+[coeff,X_hat,latent] = pca(X_hat,'NumComponents',763);
+% save('X_hat_PC_763.mat','X_hat');
 %% 10 fold + Logistic Full data
 addpath('four_model_project_code/liblinear');
 N = size(X, 1);
@@ -133,6 +137,14 @@ precision = precision / K;
 % save('precision_KNN_set_1.mat','precision');
 % save('precision_KNN_set_2.mat','precision');
 % save('precision_KNN_prior_set_3.mat','precision');
+%% KNN Model building
+load X_hat_PC_763.mat
+mdl = fitcknn(X_hat, Y);
+mdl.BreakTies = 'nearest';
+mdl.IncludeTies = false;
+mdl.Distance = 'correlation';
+mdl.NumNeighbors = 50;
+% save('KNN_nearest_correlation_C_50.mat','mdl');
 %% KNN with Gaussian Kernel PCA 10-fold cross-validation
 load X_hat_PC_763.mat
 % Set 1
@@ -201,31 +213,38 @@ precision = precision / K;
 % save('precision_KNN_Gaussian_kernel_set_1.mat','precision');
 % save('precision_KNN_Gaussian_kernel_set_2.mat','precision');
 % save('precision_KNN_Gaussian_kernel_set_3.mat','precision');
-%% Kernel with SVM
+%% Linear + Intersection Kernel with SVM
 load X_hat_PC_763.mat
 addpath('four_model_project_code/libsvm');
 % use original data
 % X_hat = X;
 N = size(X_hat, 1);
 K  = 10;
+I = 5;
 Indices = crossvalind('Kfold', N, K);
-precision = zeros(5, 1);
-k = 1;
-X_train = X_hat(Indices ~= k, :);
-X_test = X_hat(Indices == k, :);
-Y_train = Y(Indices ~= k);
-Y_test = Y(Indices == k);
+Y = full(Y);
 
-k = @(x,x2) kernel_poly(x, x2, 1);
-precision(1) = precision(1) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
-k = @(x,x2) kernel_poly(x, x2, 2);
-precision(2) = precision(2) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
-k = @(x,x2) kernel_poly(x, x2, 3);
-precision(3) = precision(3) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
-k = @(x,x2) kernel_gaussian(x, x2, 20);
-precision(4) = precision(4) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
-k = @(x,x2) kernel_intersection(x, x2);
-precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+for k = 1:K
+    X_train = X_hat(Indices ~= k, :);
+    X_test = X_hat(Indices == k, :);
+    Y_train = Y(Indices ~= k);
+    Y_test = Y(Indices == k);
+    mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
+    YHat = predict(mdl,X_test);
+    YHat(YHat > 0.6) = 1;
+    YHat(~(YHat > 0.6)) = 0;
+    precision = precision + mean(YHat == Y_test);
+end
+precision = precision / K;
+% k = @(x,x2) kernel_intersection(x, x2);
+% precision = kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+% precision = 1 - precision;
+% k = @(x,x2) kernel_poly(x, x2, 1);
+% precision(1) = precision(1) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+% k = @(x,x2) kernel_poly(x, x2, 2);
+% precision(2) = precision(2) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+% k = @(x,x2) kernel_poly(x, x2, 3);
+% precision(3) = precision(3) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
 % for k = 1:K
 %     X_train = X_hat(Indices ~= k, :);
 %     X_test = X_hat(Indices == k, :);
@@ -244,6 +263,37 @@ precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k)
 %     precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
 % end
 % precision = 1 - precision / K;
+%% Train SVM
+load X_hat_PC_763.mat
+Y_hat = full(Y);
+mdl = fitrlinear(X_hat, Y_hat, 'Regularization', 'lasso', 'Solver', 'sparsa');
+YHat = predict(mdl,X_hat);
+YHat(YHat > 0.6) = 1;
+YHat(~(YHat > 0.6)) = 0;
+precision = mean(YHat == Y_hat);
+% save('SVM_fitrlinear_model.mat','mdl');
+%% Gausian Kernel with SVM
+% load X_hat_PC_763.mat
+addpath('four_model_project_code/libsvm');
+% use original data
+X_hat = X;
+N = size(X_hat, 1);
+K  = 10;
+I = 5;
+Indices = crossvalind('Kfold', N, K);
+sigmas = [0.01, 0.1, 1, 10, 100, 1000];
+precision = zeros(length(sigmas), 1);
+k = 1;
+X_train = X_hat(Indices ~= k, :);
+X_test = X_hat(Indices == k, :);
+Y_train = Y(Indices ~= k);
+Y_test = Y(Indices == k);
+
+for i = 1:length(sigmas)
+    s = sigmas(i);
+    k = @(x,x2) kernel_gaussian(x, x2, s);
+    precision(i) = precision(i) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
+end
 %% Method Summary
 % HW 02 Decision Tree, Q3
 % HW 05 Supervised Neural Network, Q1

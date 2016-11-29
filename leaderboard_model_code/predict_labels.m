@@ -9,4 +9,10 @@ function [Y_hat] = predict_labels(word_counts, cnn_feat, prob_feat, color_feat, 
 %           raw_tweets      nx1 cells containing all the raw tweets in text
 % Outputs:  Y_hat           nx1 predicted labels (1 for joy, 0 for sad)
 
+load SVM_fitrlinear_model.mat
+word_counts_full = full(word_counts);
+[coeff,score,latent] = pca(word_counts_full,'NumComponents',763);
+Y_hat = predict(mdl,score);
+Y_hat(Y_hat > 0.6) = 1;
+Y_hat(~(Y_hat > 0.6)) = 0;
 end
