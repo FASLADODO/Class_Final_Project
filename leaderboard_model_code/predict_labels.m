@@ -10,9 +10,15 @@ function [Y_hat] = predict_labels(word_counts, cnn_feat, prob_feat, color_feat, 
 % Outputs:  Y_hat           nx1 predicted labels (1 for joy, 0 for sad)
 
 load SVM_fitrlinear_model.mat
+load coeff_PC_763.mat
 word_counts_full = full(word_counts);
-[coeff,score,latent] = pca(word_counts_full,'NumComponents',763);
+
+X0 = bsxfun(@minus, word_counts_full, mean(word_counts_full,1));
+score = X0*coeff;
+
 Y_hat = predict(mdl,score);
-Y_hat(Y_hat > 0.6) = 1;
-Y_hat(~(Y_hat > 0.6)) = 0;
+threshold = 0.6;
+mask = Y_hat > threshold;
+Y_hat(mask) = 1;
+Y_hat(~mask) = 0;
 end
