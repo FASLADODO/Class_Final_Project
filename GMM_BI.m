@@ -6,7 +6,7 @@ for l = 1:category
     train_x_letter = train_x(letter_mask, :);
 
     option = statset('MaxIter', 1000);
-    GMModel = fitgmdist(train_x_letter, K, 'CovarianceType', 'diagonal', 'Options', option, 'RegularizationValue', 1e-5);
+    GMModel = fitgmdist(train_x_letter, K, 'Options', option, 'RegularizationValue', 1e-5);
     prob_dens_func(:, l) = pdf(GMModel, test_x);
 end
 prob_dens_func = bsxfun(@times, prob_dens_func, prior);

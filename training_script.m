@@ -307,12 +307,12 @@ Y_test = Y(Indices == k);
 i = 4;
 c = clusters(i);
 precision(i) = precision(i) + GMM(X_train,Y_train,X_test,Y_test, c);
-%% GMM with Baysian Inference
+%% GMM with Baysian Inference (Has bug, needs to find TA)
 load X_hat_PC_763.mat
 N = size(X_hat, 1);
 K  = 10;
 Indices = crossvalind('Kfold', N, K);
-clusters = [5, 10, 50, 100, 500, 1000, 2000];
+clusters = [5, 10, 50, 100];
 precision = zeros(length(clusters), 1);
 k = 1;
 X_train = X_hat(Indices ~= k, :);
@@ -327,7 +327,7 @@ for l = 1:category
     letter_mask = Y_train == l;
     prior(l) = mean(letter_mask);
 end
-i = 5;
+i = 4;
 c = clusters(i);
 precision(i) = precision(i) + GMM_BI(X_train,Y_train,X_test,Y_test, c, prior);
 
