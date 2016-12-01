@@ -5,7 +5,7 @@ Y = full(Y);
 
 N = size(X, 1);
 K  = 10;
-numOfTrees = [50; 100; 250; 500];
+numOfTrees = [50];
 Indices = crossvalind('Kfold', N, K);
 
 precision = zeros(K,numel(numOfTrees));
