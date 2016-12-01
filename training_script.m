@@ -38,6 +38,7 @@ X_hat = X0*princ_loading;
 X_hat = full(X);
 [coeff,X_hat,latent] = pca(X_hat,'NumComponents',763);
 % save('X_hat_PC_763.mat','X_hat');
+% save('coeff_PC_763.mat','coeff');
 %% 10 fold + Logistic Full data
 addpath('four_model_project_code/liblinear');
 N = size(X, 1);
@@ -213,17 +214,14 @@ precision = precision / K;
 % save('precision_KNN_Gaussian_kernel_set_1.mat','precision');
 % save('precision_KNN_Gaussian_kernel_set_2.mat','precision');
 % save('precision_KNN_Gaussian_kernel_set_3.mat','precision');
-%% Linear + Intersection Kernel with SVM
+%% SVM use fitrlinear
 load X_hat_PC_763.mat
-addpath('four_model_project_code/libsvm');
-% use original data
-% X_hat = X;
 N = size(X_hat, 1);
 K  = 10;
-I = 5;
 Indices = crossvalind('Kfold', N, K);
 Y = full(Y);
-
+precision = 0;
+threshold = 0.6;
 for k = 1:K
     X_train = X_hat(Indices ~= k, :);
     X_test = X_hat(Indices == k, :);
@@ -231,8 +229,8 @@ for k = 1:K
     Y_test = Y(Indices == k);
     mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
     YHat = predict(mdl,X_test);
-    YHat(YHat > 0.6) = 1;
-    YHat(~(YHat > 0.6)) = 0;
+    YHat(YHat > threshold) = 1;
+    YHat(~(YHat > threshold)) = 0;
     precision = precision + mean(YHat == Y_test);
 end
 precision = precision / K;
@@ -279,7 +277,6 @@ addpath('four_model_project_code/libsvm');
 X_hat = X;
 N = size(X_hat, 1);
 K  = 10;
-I = 5;
 Indices = crossvalind('Kfold', N, K);
 sigmas = [0.01, 0.1, 1, 10, 100, 1000];
 precision = zeros(length(sigmas), 1);
@@ -294,17 +291,58 @@ for i = 1:length(sigmas)
     k = @(x,x2) kernel_gaussian(x, x2, s);
     precision(i) = precision(i) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
 end
+%% GMM
+load X_hat_PC_763.mat
+N = size(X_hat, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+clusters = [10, 50, 100, 500, 1000];
+precision = zeros(length(clusters), 1);
+k = 1;
+X_train = X_hat(Indices ~= k, :);
+X_test = X_hat(Indices == k, :);
+Y = full(Y);
+Y_train = Y(Indices ~= k);
+Y_test = Y(Indices == k);
+i = 4;
+c = clusters(i);
+precision(i) = precision(i) + GMM(X_train,Y_train,X_test,Y_test, c);
+%% GMM with Baysian Inference (Has bug, needs to find TA)
+load X_hat_PC_763.mat
+N = size(X_hat, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+clusters = [5, 10, 50, 100];
+precision = zeros(length(clusters), 1);
+k = 1;
+X_train = X_hat(Indices ~= k, :);
+X_test = X_hat(Indices == k, :);
+Y = full(Y);
+Y_train = Y(Indices ~= k);
+Y_test = Y(Indices == k);
+
+category = 2;
+prior = zeros(1, category);
+for l = 1:category
+    letter_mask = Y_train == l;
+    prior(l) = mean(letter_mask);
+end
+i = 4;
+c = clusters(i);
+precision(i) = precision(i) + GMM_BI(X_train,Y_train,X_test,Y_test, c, prior);
+
 %% Method Summary
+% Baysian
 % HW 02 Decision Tree, Q3
 % HW 05 Supervised Neural Network, Q1
-% HW 07 k-means, GMM Q2
-% HW 07 Baysian Inference with GMM Q3
+% HW 06(b) Perception, Q2
 % HW 07 Auto-encoder with logistic & k-means Q5
 
 % WORKING ON 
-% HW 06(b) Kernel with SVM, Q1
-% HW 06(b) Perception, Q2
+% HW 07 Baysian Inference with GMM Q3
 
 % FINISHED
+% HW 06(b) Kernel with SVM, Q1
 % HW 07 PCA with logistic & k-means
+% HW 07 GMM Q2
 % HW 02 KNN, kernel method, Q2
