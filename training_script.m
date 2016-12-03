@@ -261,7 +261,7 @@ precision = precision / K;
 %     precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
 % end
 % precision = 1 - precision / K;
-%% Train SVM
+%% SVM model building
 load X_hat_PC_763.mat
 Y_hat = full(Y);
 mdl = fitrlinear(X_hat, Y_hat, 'Regularization', 'lasso', 'Solver', 'sparsa');
@@ -330,7 +330,224 @@ end
 i = 4;
 c = clusters(i);
 precision(i) = precision(i) + GMM_BI(X_train,Y_train,X_test,Y_test, c, prior);
+%% Mutual Information Feature Selection Frequency
+% http://stackoverflow.com/questions/13603882/feature-selection-and-reduction-for-text-classification
+clear all
+addpath('four_model_project_code');
+addpath('PRML_MATLAB_TOOL_BOX/chapter01');
+load ../final_project_kit/train_set/words_train.mat
+mi = zeros(size(X, 2), 1);
+for i = 1:size(X, 2)
+    mi(i) = mutInfo(Y, X(:, i));
+end
+[sortedMI,sortedIndex] = sort(mi,'descend');
 
+% top_words = [380, 435, 493, 526, 744, 1350];
+top_words = 526;
+precision = zeros(length(top_words), 1);
+N = size(X, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+threshold = 0.61;
+
+for i = 1:length(top_words)
+    t = top_words(i);
+    index = sortedIndex(1:t);
+    X_MI = full(X(:, index));
+    Y_MI = full(Y);
+    for k = 1:K
+        X_train = X_MI(Indices ~= k, :);
+        X_test = X_MI(Indices == k, :);
+        Y_train = Y_MI(Indices ~= k);
+        Y_test = Y_MI(Indices == k);
+        mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
+        YHat = predict(mdl,X_test);
+        YPred = zeros(length(YHat), 1);
+        YPred(YHat > threshold) = 1;
+        precision(i) = precision(i) + mean(YPred == Y_test);
+    end
+end
+precision = precision / K;
+% save('MI_Frequency_X_Y.mat','X_MI', 'Y_MI', 'index');
+% save('MI_Frequency_MI_SortedIndex.mat','sortedIndex', 'sortedMI');
+%% MI Frequency SVM model (can be used)
+clear all
+load MI_Frequency_X_Y.mat
+threshold = 0.61;
+mdl = fitrlinear(X_MI, Y_MI, 'Regularization', 'lasso', 'Solver', 'sparsa');
+YHat = predict(mdl,X_MI);
+YPred = zeros(length(YHat), 1);
+YPred(YHat > threshold) = 1;
+precision = mean(YPred == Y_MI);
+%% LASSO feature selection
+% lasso feature selection matlab (google)
+
+%% SVM using MI frequency
+clear all
+load 'MI_X_Y.mat'
+N = size(X_MI, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+thresholds = 0.6:0.01:0.7;
+precision = zeros(length(thresholds), 1);
+for k = 1:K
+    X_train = X_MI(Indices ~= k, :);
+    X_test = X_MI(Indices == k, :);
+    Y_train = Y_MI(Indices ~= k);
+    Y_test = Y_MI(Indices == k);
+    mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
+    YHat = predict(mdl,X_test);
+    for t = 1:length(thresholds)
+        threshold = thresholds(t);
+        YPred = zeros(length(YHat), 1);
+        YPred(YHat > threshold) = 1;
+        precision(t) = precision(t) + mean(YPred == Y_test);
+    end
+end
+precision = precision / K;
+%% MI  + PCA Feature generation (can be subsituted by the follow block)
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load MI_Frequency_MI_SortedIndex.mat
+
+t = 526;
+index = sortedIndex(1:t);
+X_MI = full(X(:, index));
+Y_MI = full(Y);
+[coeff,score_526,latent,tsquared,explained_526,mu] = pca(X_MI,'NumComponents',87);
+for i = 2 : length(explained_526)
+    explained_526(i) = explained_526(i) + explained_526(i-1);
+end
+save('MI_PCA_526.mat','coeff', 'index');
+% t = 744;
+% index = sortedIndex(1:t);
+% X_MI = full(X(:, index));
+% Y_MI = full(Y);
+% [coeff,score_744,latent,tsquared,explained_744,mu] = pca(X_MI,'NumComponents',105);
+% for i = 2 : length(explained_744)
+%     explained_744(i) = explained_744(i) + explained_744(i-1);
+% end
+% save('MI_PCA_744.mat','coeff', 'index');
+% t = 1350;
+% index = sortedIndex(1:t);
+% X_MI = full(X(:, index));
+% Y_MI = full(Y);
+% [coeff,score_1350,latent,tsquared,explained_1350,mu] = pca(X_MI,'NumComponents',167);
+% for i = 2 : length(explained_1350)
+%     explained_1350(i) = explained_1350(i) + explained_1350(i-1);
+% end
+% save('MI_PCA_1350.mat','coeff', 'index');
+%% MI + PCA dataset generation
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load MI_Frequency_MI_SortedIndex.mat
+
+t = 5284;
+index = sortedIndex(1:t);
+X_MI = full(X(:, index));
+Y_MI = full(Y);
+[ coeff ] = get_pca(X_MI);
+
+save('MI_PCA.mat','coeff', 'index');
+%% SVM + PCA SVM (CAN BE USED)
+% t = 4748, thresholds = 0.62, accuracy = 0.7929
+% t = 5284, thresholds = 0.60, accuracy = 0.7838
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load MI_Frequency_MI_SortedIndex.mat
+load MI_PCA.mat
+
+X_MI = full(X(:, index));
+Y_MI = full(Y);
+X0 = bsxfun(@minus, X_MI, mean(X_MI,1));
+X_MI = X0*coeff;
+
+N = size(X_MI, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+thresholds = 0.55:0.01:0.7;
+precision = zeros(length(thresholds), 1);
+for t = 1:length(thresholds)
+    threshold = thresholds(t);
+    for k = 1:K
+        X_train = X_MI(Indices ~= k, :);
+        X_test = X_MI(Indices == k, :);
+        Y_train = Y_MI(Indices ~= k);
+        Y_test = Y_MI(Indices == k);
+        mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
+        YHat = predict(mdl,X_test);
+        YHat(YHat > threshold) = 1;
+        YHat(~(YHat > threshold)) = 0;
+        precision(t) = precision(t) + mean(YHat == Y_test);
+    end
+end
+precision = precision / K;
+%% Mutual Information Feature Selection SVM
+clear all
+addpath('four_model_project_code');
+addpath('PRML_MATLAB_TOOL_BOX/chapter01');
+load ../final_project_kit/train_set/words_train.mat
+X_presence = full(X);
+X_presence(X_presence ~= 0) = 1;
+mi = zeros(size(X_presence, 2), 1);
+for i = 1:size(X_presence, 2)
+    mi(i) = mutInfo(Y, X_presence(:, i));
+end
+[sortedMI,sortedIndex] = sort(mi,'descend');
+% top_words = [413, 712, 1304, 1913, 3095, 4666];
+% precision = zeros(length(top_words), 1);
+top_words = 1304;
+N = size(X, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+% thresholds = 0.55:0.01:0.65;
+thresholds = 0.6;
+precision = zeros(length(thresholds), 1);
+
+% for i = 1:length(top_words)
+    i = 1;
+    top_word = top_words(i);
+    index = sortedIndex(1:top_word);
+    X_MI = full(X_presence(:, index));
+    Y_MI = full(Y);
+    for k = 1:K
+        X_train = X_MI(Indices ~= k, :);
+        X_test = X_MI(Indices == k, :);
+        Y_train = Y_MI(Indices ~= k);
+        Y_test = Y_MI(Indices == k);
+        mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
+        YHat = predict(mdl,X_test);
+        for t = 1:length(thresholds)
+%             t = 1;
+            threshold = thresholds(t);
+            YPred = zeros(length(YHat), 1);
+            YPred(YHat > threshold) = 1;
+            precision(t) = precision(t) + mean(YPred == Y_test);
+%             precision(i) = precision(i) + mean(YPred == Y_test);
+        end
+    end
+% end
+precision = precision / K;
+% save('MI_Feature_SVM_index_thresholds.mat','index', 'thresholds');
+%% Mutual Information Feature Selection SVM Model building
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load MI_Feature_SVM_index_thresholds.mat
+
+X_presence = full(X);
+X_presence(X_presence ~= 0) = 1;
+X_MI = full(X_presence(:, index));
+Y_MI = full(Y);
+
+mdl = fitrlinear(X_MI, Y_MI, 'Regularization', 'lasso', 'Solver', 'sparsa');
+YHat = predict(mdl,X_MI);
+YPred = zeros(length(YHat), 1);
+YPred(YHat > thresholds) = 1;
+precision = mean(YPred == Y_MI);
+% save('MI_Feature_SVM_model.mat','mdl');
+%% Naive Baysian with MI Feature Selection
+% https://www.mathworks.com/help/stats/fitcnb.html
+% section Train Naive Bayes Classifiers using multinomial Predictors
 %% Method Summary
 % Baysian
 % HW 02 Decision Tree, Q3
@@ -346,3 +563,9 @@ precision(i) = precision(i) + GMM_BI(X_train,Y_train,X_test,Y_test, c, prior);
 % HW 07 PCA with logistic & k-means
 % HW 07 GMM Q2
 % HW 02 KNN, kernel method, Q2
+%% combining methods
+% SVM + PCA SVM
+% MI Frequency SVM model
+% Mutual Information Feature Selection SVM Model building (BEST)
+
+% Naive Baysian with MI Feature Selection

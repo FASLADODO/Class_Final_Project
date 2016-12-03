@@ -18,4 +18,4 @@ raw_imgs = 0;
 raw_tweets = 0;
 Y_hat = full(Y);
 [Y_pred] = predict_labels(X, cnn_feat, prob_feat, color_feat, raw_imgs, raw_tweets);
-mean( Y_hat == Y_pred )
+precision = mean( Y_hat == Y_pred );
