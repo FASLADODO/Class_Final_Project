@@ -9,7 +9,7 @@ load ../final_project_kit/train_set_unlabeled/train_unlabeled_cnn_feat.mat
 load ../final_project_kit/train_set_unlabeled/train_unlabeled_img_prob.mat
 load ../final_project_kit/train_set_unlabeled/train_unlabeled_color.mat
 load ../final_project_kit/train_set_unlabeled/train_unlabeled_tweet_id_img.mat
-%% load training
+%% Testing
 load ../final_project_kit/train_set/words_train.mat
 cnn_feat = 0;
 prob_feat = 0;

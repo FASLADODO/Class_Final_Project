@@ -9,14 +9,12 @@ function [Y_hat] = predict_labels(word_counts, cnn_feat, prob_feat, color_feat, 
 %           raw_tweets      nx1 cells containing all the raw tweets in text
 % Outputs:  Y_hat           nx1 predicted labels (1 for joy, 0 for sad)
 
-load MI_Feature_SVM_model.mat
-load MI_Feature_SVM_index_thresholds.mat
+load NB_Feature_model.mat
+load NB_Feature_index.mat
 
 X_presence = full(word_counts);
 X_presence(X_presence ~= 0) = 1;
 X_MI = full(X_presence(:, index));
 
-YHat = predict(mdl,X_MI);
-Y_hat = zeros(length(YHat), 1);
-Y_hat(YHat > thresholds) = 1;
+[Y_hat,Posterior,Cost] = predict(Mdl,X_MI);
 end
