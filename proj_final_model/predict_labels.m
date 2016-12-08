@@ -10,15 +10,15 @@ function [Y_hat] = predict_labels(word_counts, cnn_feat, prob_feat, color_feat, 
 % Outputs:  Y_hat           nx1 predicted labels (1 for joy, 0 for sad)
 
 %% Naive Bayes prediction
-% load NB_model.mat
-% Y_hat = nb_predict(mdl, word_counts);
+load NB_model.mat
+Y_hat = nb_predict(mdl, word_counts);
 %% SVM prediction
 % load SVM_model.mat
 % Y_hat = svm_predict(mdl, word_counts);
 %% KNN prediction
-load KNN_coeff.mat
-load KNN_model.mat
-Y_hat = KNN_predict(mdl, word_counts, coeff);
+% load KNN_coeff.mat
+% load KNN_model.mat
+% Y_hat = KNN_predict(mdl, word_counts, coeff);
 %% K_means Prediction
 % load K_means_coeff.mat
 % load words_train.mat
