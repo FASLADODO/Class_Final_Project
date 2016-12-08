@@ -2,8 +2,9 @@ function X_filtered = manual_feature_reduction(X)
 x_stop = remove_stop_words('ManualFeatureSelection/StopWords/StopWords1.csv',',');
 [x_users, users_indicator] = group_user_names_into_one_feature(X);
 [x_dupes, dupesCols] = merge_hashtag_duplicates(X);
-full_x = full(X);
-emptyFeatures = find(~any(full_x,1) == 1);
+% full_x = full(X);
+% emptyFeatures = find(~any(full_x,1) == 1);
+load('emptyFeatures.mat');
 cols_to_remove = [x_stop; x_users; x_dupes; emptyFeatures'];
 cols_to_remove = unique(cols_to_remove);
 
