@@ -344,8 +344,8 @@ for i = 1:size(X, 2)
 end
 [sortedMI,sortedIndex] = sort(mi,'descend');
 
-% top_words = [380, 435, 493, 526, 744, 1350];
-top_words = 526;
+top_words = [1000, 1250, 1500];
+%top_words = 526;
 precision = zeros(length(top_words), 1);
 N = size(X, 1);
 K  = 10;
