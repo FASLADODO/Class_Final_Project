@@ -1,4 +1,4 @@
-1. Naive Bayes Model
+1. Naive Bayes Model (Generative Method)
 
 Training Naive Bayes Model:
 
@@ -18,7 +18,7 @@ Testing Naive Bayes Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-2. SVM Model
+2. SVM Model (Discriminative Method)
 
 Training SVM Model:
 
@@ -38,7 +38,7 @@ Testing SVM Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-3. KNN Model
+3. KNN Model (Instance Based Method & Semi-supervised Dimensionality Reduction)
 
 Training KNN Model:
 
@@ -58,7 +58,7 @@ Testing KNN Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-4. K means Model
+4. K means Model (Generative Method & Semi-supervised Dimensionality Reduction)
 
 Training K means Model:
 
