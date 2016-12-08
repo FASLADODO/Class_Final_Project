@@ -261,7 +261,7 @@ precision = precision / K;
 %     precision(5) = precision(5) + kernel_libsvm(X_train, Y_train, X_test, Y_test, k);
 % end
 % precision = 1 - precision / K;
-%% Train SVM
+%% SVM model building
 load X_hat_PC_763.mat
 Y_hat = full(Y);
 mdl = fitrlinear(X_hat, Y_hat, 'Regularization', 'lasso', 'Solver', 'sparsa');
@@ -348,7 +348,7 @@ precision = zeros(length(top_words), 1);
 N = size(X, 1);
 K  = 10;
 Indices = crossvalind('Kfold', N, K);
-threshold = 0.61;
+thresholds = 0.61;
 
 for i = 1:length(top_words)
     t = top_words(i);
@@ -363,12 +363,12 @@ for i = 1:length(top_words)
         mdl = fitrlinear(X_train, Y_train, 'Regularization', 'lasso', 'Solver', 'sparsa');
         YHat = predict(mdl,X_test);
         YPred = zeros(length(YHat), 1);
-        YPred(YHat > threshold) = 1;
+        YPred(YHat > thresholds) = 1;
         precision(i) = precision(i) + mean(YPred == Y_test);
     end
 end
 precision = precision / K;
-% save('MI_Frequency_X_Y.mat','X_MI', 'Y_MI', 'index');
+% save('MI_Frequency_X_Y.mat','index', 'thresholds');
 % save('MI_Frequency_MI_SortedIndex.mat','sortedIndex', 'sortedMI');
 %% MI Frequency SVM model (can be used)
 clear all
@@ -379,6 +379,7 @@ YHat = predict(mdl,X_MI);
 YPred = zeros(length(YHat), 1);
 YPred(YHat > threshold) = 1;
 precision = mean(YPred == Y_MI);
+% save('MI_Frequency_SVM_model.mat','mdl');
 %% LASSO feature selection
 % lasso feature selection matlab (google)
 
@@ -442,7 +443,7 @@ clear all
 load ../final_project_kit/train_set/words_train.mat
 load MI_Frequency_MI_SortedIndex.mat
 
-t = 5284;
+t = 4748;
 index = sortedIndex(1:t);
 X_MI = full(X(:, index));
 Y_MI = full(Y);
@@ -496,7 +497,7 @@ end
 [sortedMI,sortedIndex] = sort(mi,'descend');
 % top_words = [413, 712, 1304, 1913, 3095, 4666];
 % precision = zeros(length(top_words), 1);
-top_words = 1304;
+top_words = 3095;
 N = size(X, 1);
 K  = 10;
 Indices = crossvalind('Kfold', N, K);
@@ -529,6 +530,7 @@ precision = zeros(length(thresholds), 1);
 % end
 precision = precision / K;
 % save('MI_Feature_SVM_index_thresholds.mat','index', 'thresholds');
+% save('MI_Feature_sortMI_sortIndex.mat','sortedMI', 'sortedIndex');
 %% Mutual Information Feature Selection SVM Model building
 clear all
 load ../final_project_kit/train_set/words_train.mat
@@ -544,10 +546,96 @@ YHat = predict(mdl,X_MI);
 YPred = zeros(length(YHat), 1);
 YPred(YHat > thresholds) = 1;
 precision = mean(YPred == Y_MI);
-% save('MI_Feature_SVM_index_thresholds.mat','index', 'thresholds');
-%% Naive Baysian with MI Feature Selection
+% save('MI_Feature_SVM_model.mat','mdl');
+%% Naive Baysian with Frequency
 % https://www.mathworks.com/help/stats/fitcnb.html
 % section Train Naive Bayes Classifiers using multinomial Predictors
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load MI_Frequency_MI_SortedIndex.mat
+
+% top_words = [435, 807, 1350, 1913, 3186, 4748, 5248];
+top_words = 3186;
+precision = zeros(length(top_words), 1);
+N = size(X, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+
+for i = 1:length(top_words)
+%     i = 1;
+    top_word = top_words(i);
+    index = sortedIndex(1:top_word);
+    X_MI = full(X(:, index));
+    Y_MI = full(Y);
+    for k = 1:K
+        X_train = X_MI(Indices ~= k, :);
+        X_test = X_MI(Indices == k, :);
+        Y_train = Y_MI(Indices ~= k);
+        Y_test = Y_MI(Indices == k);
+        Mdl = fitcnb(X_train,Y_train,'Distribution','mn');
+        [label,Posterior,Cost] = predict(Mdl,X_test);
+        precision(i) = precision(i) + mean(label == Y_test);
+    end
+end
+precision = precision / K;
+% save('NB_Frequency_index.mat','index');
+%% Naive Baysian with Frequency Model Building
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load NB_Frequency_index.mat
+
+X_MI = full(X(:, index));
+Y_MI = full(Y);
+Mdl = fitcnb(X_MI,Y_MI,'Distribution','mn');
+[label,Posterior,Cost] = predict(Mdl,X_MI);
+precision = mean(label == Y_MI);
+% save('NB_Frequency_model.mat','Mdl');
+%% Naive Baysian with Feature
+% https://www.mathworks.com/help/stats/fitcnb.html
+% section Train Naive Bayes Classifiers using multinomial Predictors
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load MI_Feature_sortMI_sortIndex.mat
+
+X_presence = full(X);
+X_presence(X_presence ~= 0) = 1;
+% top_words = [413, 712, 1304, 1913, 3095, 4666, 5252];
+top_words = 3095;
+precision = zeros(length(top_words), 1);
+N = size(X, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+
+for i = 1:length(top_words)
+    top_word = top_words(i);
+    index = sortedIndex(1:top_word);
+    X_MI = full(X_presence(:, index));
+    Y_MI = full(Y);
+    for k = 1:K
+        X_train = X_MI(Indices ~= k, :);
+        X_test = X_MI(Indices == k, :);
+        Y_train = Y_MI(Indices ~= k);
+        Y_test = Y_MI(Indices == k);
+        Mdl = fitcnb(X_train,Y_train,'Distribution','mn');
+        [label,Posterior,Cost] = predict(Mdl,X_test);
+        precision(i) = precision(i) + mean(label == Y_test);
+    end
+end
+precision = precision / K;
+% save('NB_Feature_index.mat','index');
+%% Naive Baysian with Feature Model Building
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load NB_Feature_index.mat
+
+X_presence = full(X);
+X_presence(X_presence ~= 0) = 1;
+X_MI = full(X_presence(:, index));
+Y_MI = full(Y);
+Mdl = fitcnb(X_MI,Y_MI,'Distribution','mn');
+[label,Posterior,Cost] = predict(Mdl,X_MI);
+precision = mean(label == Y_MI);
+% save('NB_Feature_model.mat','Mdl');
 %% Method Summary
 % Baysian
 % HW 02 Decision Tree, Q3
@@ -565,7 +653,9 @@ precision = mean(YPred == Y_MI);
 % HW 02 KNN, kernel method, Q2
 %% combining methods
 % SVM + PCA SVM
-% MI Frequency SVM model
-% Mutual Information Feature Selection SVM Model building (BEST)
+% Mutual Information Feature Selection SVM Model building (second best)
+% Naive Baysian with Frequency Model Building (BEST)
+% Naive Baysian with Feature Model Building ()
+
 
 % Naive Baysian with MI Feature Selection
