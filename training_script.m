@@ -67,7 +67,8 @@ end
 precision = precision / K;
 %% K-means with PCA
 load X_hat_PC_763.mat
-clusters = [100, 500, 1000, 2000];
+% clusters = [100, 500, 1000, 2000];
+clusters = 500;
 precision = zeros(length(clusters), 1);
 N = size(X_hat, 1);
 K  = 10;
@@ -146,6 +147,7 @@ mdl.IncludeTies = false;
 mdl.Distance = 'correlation';
 mdl.NumNeighbors = 50;
 % save('KNN_nearest_correlation_C_50.mat','mdl');
+precision = mean(predict(mdl, X_hat) == Y);
 %% KNN with Gaussian Kernel PCA 10-fold cross-validation
 load X_hat_PC_763.mat
 % Set 1
@@ -636,7 +638,7 @@ Mdl = fitcnb(X_MI,Y_MI,'Distribution','mn');
 [label,Posterior,Cost] = predict(Mdl,X_MI);
 precision = mean(label == Y_MI);
 % save('NB_Feature_model.mat','Mdl');
-%% chi^2 feature Frequency Selection Naive Bayes
+%% chi^2 feature Selection Frequency Naive Bayes
 clear all
 addpath('chi2feature');
 load ../final_project_kit/train_set/words_train.mat
@@ -672,6 +674,69 @@ end
 precision = precision / K;
 % save('chi2_Frequency_sortChi2_sortIndex.mat','sortedChi2', 'sortedIndex');
 % save('NB_chi2_Frequency_index.mat','index');
+%% chi^2 feature Selection Frequency Naive Bayes Model Building
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load NB_chi2_Frequency_index.mat
+
+X_chi = full(X(:, index));
+Y_chi = full(Y);
+Mdl = fitcnb(X_chi,Y_chi,'Distribution','mn');
+[label,Posterior,Cost] = predict(Mdl,X_chi);
+precision = mean(label == Y_chi);
+% save('NB_chi2_Frequency_model.mat','Mdl');
+%% chi^2 feature Selection Feature Naive Bayes
+clear all
+addpath('chi2feature');
+load ../final_project_kit/train_set/words_train.mat
+
+X_presence = full(X);
+X_presence(X_presence ~= 0) = 1;
+X_chi = full(X_presence);
+Y_chi = full(Y);
+[chi, df] = chi2feature(X_chi,Y_chi);
+
+[sortedChi2,sortedIndex] = sort(chi,'descend');
+% save('chi2_Feature_sortChi2_sortIndex.mat','sortedChi2', 'sortedIndex');
+
+% top_words = [142, 537, 815, 1423, 1994, 3155, 4822, 5210];
+top_words = 3155;
+precision = zeros(length(top_words), 1);
+N = size(X, 1);
+K  = 10;
+Indices = crossvalind('Kfold', N, K);
+
+for i = 1:length(top_words)
+    top_word = top_words(i);
+    index = sortedIndex(1:top_word);
+    X_chi = full(X_presence(:, index));
+    Y_chi = full(Y);
+    for k = 1:K
+        X_train = X_chi(Indices ~= k, :);
+        X_test = X_chi(Indices == k, :);
+        Y_train = Y_chi(Indices ~= k);
+        Y_test = Y_chi(Indices == k);
+        Mdl = fitcnb(X_train,Y_train,'Distribution','mn');
+        [label,Posterior,Cost] = predict(Mdl,X_test);
+        precision(i) = precision(i) + mean(label == Y_test);
+    end
+end
+precision = precision / K;
+
+% save('NB_chi2_Feature_index.mat','index');
+%% chi^2 feature Selection Feature Naive Bayes Model Building
+clear all
+load ../final_project_kit/train_set/words_train.mat
+load NB_chi2_Feature_index.mat
+
+X_presence = full(X);
+X_presence(X_presence ~= 0) = 1;
+X_chi = full(X_presence(:, index));
+Y_chi = full(Y);
+Mdl = fitcnb(X_chi,Y_chi,'Distribution','mn');
+[label,Posterior,Cost] = predict(Mdl,X_chi);
+precision = mean(label == Y_chi);
+% save('NB_chi2_Feature_model.mat','Mdl');
 %% Method Summary
 % Baysian
 % HW 02 Decision Tree, Q3
