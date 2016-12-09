@@ -70,7 +70,6 @@ Overall approach: Chose the top 764 principal components that "described" 90% of
 features and clustered them into the 50 closest neighbors. The neighborhood size was determined 
 through CV. 
 
-
 Training KNN Model:
 
 - open the "KNN_script.m"
@@ -93,7 +92,7 @@ KNN Model CV Accuracy: 0.7273
 
 ************************************************************************************************
 
-4. K-means/PCA Model (semi-supervised dimensionality reduction)
+4. K means model with PCA feature reduction (Semi-supervised dimensionality reduction of the data)
 
 Overall approach: Chose the top 764 principal components that "described" 90% of the original 10,000 
 features. Created 500 clusters to try and group the tweets in categories. The cluster size was determined
