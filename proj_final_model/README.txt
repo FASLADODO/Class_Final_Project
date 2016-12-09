@@ -1,4 +1,4 @@
-1. Naive Bayes Model (Generative method)
+1. Naive Bayes Model (Generative Method)
 
 Training Naive Bayes Model:
 
@@ -18,7 +18,7 @@ Testing Naive Bayes Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-2. SVM Model (Discriminative method)
+2. SVM Model (Discriminative Method)
 
 Training SVM Model:
 
