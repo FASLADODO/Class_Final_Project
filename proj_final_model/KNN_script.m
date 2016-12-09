@@ -13,6 +13,22 @@ save('KNN_coeff.mat','coeff');
 %% KNN Model generating
 load KNN_coeff.mat
 mdl = knn_model(X, Y, coeff);
+
+%% KNN CV
+load K_means_coeff.mat;
+N = size(X,1);
+K = 10;
+Indices = crossvalind('kfold', N, K);
+cv_precision = zeros(K,1);
+
+for k = 1:K
+    mdl = knn_model(X(k~=Indices,:), Y(k~=Indices), coeff);
+    YHat = KNN_predict(mdl, X(k==Indices,:), coeff);
+    cv_precision(k) = mean(full(Y(Indices==k)) == YHat);
+end
+knn_cv_precision = sum(cv_precision)/K;
+
+mdl = knn_model(X, Y, coeff);
 % save the KNN model
 save('KNN_model.mat','mdl');
 %% KNN prediction

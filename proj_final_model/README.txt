@@ -1,4 +1,15 @@
-1. Naive Bayes Model
+BEFORE YOU START
+All models are ready to be run from "predict_labels.m", just comment in and out the code to the 
+corresponding model. See more details below.
+
+************************************************************************************************
+
+1. Naive Bayes Model (Generative Method)
+
+Overall approach: Assume that the words are independent. Since the data is sparse, we made the columns
+indicators if a word was present in a tweet or not. Feature selection was done by mutual information
+calculations to determine which features most described their corresponding labels. We used CV to determine 
+how many of the top ranking features to include in the Naive Bayes classifier. 
 
 Training Naive Bayes Model:
 
@@ -18,7 +29,18 @@ Testing Naive Bayes Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-2. SVM Model
+Naive Bayes Model CV Accuracy: 0.8529
+
+************************************************************************************************
+
+2. SVM Model (Discriminative Method)
+
+Overall approach: The SVM solver was chosen through trial and error, and we ended up using Sparse Reconstruction 
+by Separable Approximation. Feature selection was done by mutual information calculations to determine which 
+features most described their corresponding labels. We used CV to determine how many of the top ranking 
+features to include in the SVM model. The threshold value that should be used to bucket the return values
+from the model is determined at runtime by assuming the predictions should share the same distribution over 
+the data set as the priors. 
 
 Training SVM Model:
 
@@ -38,7 +60,16 @@ Testing SVM Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-3. KNN Model
+SVM Model CV Accuracy: 0.8084
+
+************************************************************************************************
+
+3. KNN Model (Instance Based Method) 
+
+Overall approach: Chose the top 764 principal components that "described" 90% of the original 10,000 
+features and clustered them into the 50 closest neighbors. The neighborhood size was determined 
+through CV. 
+
 
 Training KNN Model:
 
@@ -58,7 +89,15 @@ Testing KNN Model:
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
 
-4. K means Model
+KNN Model CV Accuracy: 0.7273
+
+************************************************************************************************
+
+4. K-means/PCA Model (semi-supervised dimensionality reduction)
+
+Overall approach: Chose the top 764 principal components that "described" 90% of the original 10,000 
+features. Created 500 clusters to try and group the tweets in categories. The cluster size was determined
+by CV, although it had little affect. 
 
 Training K means Model:
 
@@ -75,3 +114,5 @@ Testing K means Model:
 	MAKE SURE TO uncomment the "K_means prediction" section within the "predict_labels.m" function
 
 	The "predict_labels.m" function signature is just like what we submitted to leaderboard
+
+	K-Means/PCA Model CV Accuracy: 0.4447 :(

@@ -8,10 +8,10 @@ function [Y_hat] = predict_labels(word_counts, cnn_feat, prob_feat, color_feat, 
 %           raw_imgs        nx30000 raw images pixels
 %           raw_tweets      nx1 cells containing all the raw tweets in text
 % Outputs:  Y_hat           nx1 predicted labels (1 for joy, 0 for sad)
-
+%% Remove comments for the model that you need
 %% Naive Bayes prediction
-load NB_model.mat
-Y_hat = nb_predict(mdl, word_counts);
+% load NB_model.mat
+% Y_hat = nb_predict(mdl, word_counts);
 %% SVM prediction
 % load SVM_model.mat
 % Y_hat = svm_predict(mdl, word_counts);

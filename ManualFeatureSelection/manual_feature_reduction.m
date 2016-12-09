@@ -1,5 +1,8 @@
 function X_filtered = manual_feature_reduction(X)
-x_stop = remove_stop_words('ManualFeatureSelection/StopWords/StopWords1.csv',',');
+load stopwords.mat
+load topwords.mat
+x_stop = cell2mat(arrayfun(@(x)find(strcmp(topwords,x),1),stopwords, 'UniformOutput', false));
+
 [x_users, users_indicator] = group_user_names_into_one_feature(X);
 [x_dupes, dupesCols] = merge_hashtag_duplicates(X);
 full_x = full(X);

@@ -1,5 +1,5 @@
 function [colsToRemove, indicatorCols] = merge_hashtag_duplicates(X)
-topwords = get_column_of_words_from_csv('../final_project_kit2/topwords.csv','\n');
+load topwords.mat
 
 %%Find all the hashtags in top words
 hashtags_idxs = strncmpi(topwords,'#',1);
